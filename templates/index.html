@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Physical Violence Detector</title>
+  <link href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fefae0; /* Cream */
+      color: #283618; /* Deep Forest Green */
+    }
+    header {
+      background-color: #606c38; /* Dark Olive */
+      color: #fefae0; /* Cream */
+      text-align: center;
+      padding: 20px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+    main {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    .upload-section {
+      background-color: #fefae0; /* Cream */
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    .upload-section h2 {
+      margin-top: 0;
+      font-size: 22px;
+      color: #283618; /* Deep Forest Green */
+    }
+    .file-input-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    #videoUpload {
+      padding: 8px;
+      border: 1px solid #dda15e; /* Light Orange */
+      border-radius: 4px;
+      background-color: #fefae0; /* Cream */
+      color: #283618; /* Deep Forest Green */
+    }
+    #analyzeButton {
+      padding: 10px 20px;
+      background-color: #606c38; /* Dark Olive */
+      color: #fefae0; /* Cream */
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #analyzeButton:hover {
+      background-color: #dda15e; /* Light Orange */
+    }
+    #analyzeButton:disabled {
+      background-color: #283618; /* Deep Forest Green */
+      cursor: not-allowed;
+    }
+    .video-info {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #fefae0; /* Cream */
+      border: 1px solid #dda15e; /* Light Orange */
+      border-radius: 4px;
+      display: none;
+      color: #283618; /* Deep Forest Green */
+    }
+    .dashboard-section {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .video-display, .highlighted-scenes {
+      flex: 1;
+      min-width: 300px;
+      background-color: #fefae0; /* Cream */
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .video-display h2, .highlighted-scenes h2 {
+      font-size: 20px;
+      margin-top: 0;
+      color: #283618; /* Deep Forest Green */
+    }
+    .video-container {
+      margin-bottom: 20px;
+    }
+    .video-container h3 {
+      margin: 10px 0 5px;
+      font-size: 18px;
+      color: #283618; /* Deep Forest Green */
+    }
+    #originalVideoPlayer, #annotatedVideoPlayer {
+      max-width: 100%;
+      width: 100%;
+      border: 1px solid #dda15e; /* Light Orange */
+      border-radius: 4px;
+      display: none;
+    }
+    #resultMessage {
+      margin: 10px 0;
+      font-size: 16px;
+      color: #283618; /* Deep Forest Green */
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 15px 0;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: #283618; /* Deep Forest Green */
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .result-container {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      background-color: #fefae0; /* Cream */
+      border: 1px solid #dda15e; /* Light Orange */
+      display: none;
+      color: #283618; /* Deep Forest Green */
+    }
+    .timestamps-section {
+      margin-top: 15px;
+      padding: 15px;
+      background-color: #f4f3ee;
+      border: 1px solid #dda15e;
+      border-radius: 5px;
+    }
+    .timestamps-section h4 {
+      margin: 0 0 10px 0;
+      color: #283618;
+      font-size: 16px;
+    }
+    .timestamp-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .timestamp-item {
+      background-color: #bc6c25;
+      color: #fefae0;
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .no-violence-message {
+      color: #606c38;
+      font-style: italic;
+      font-size: 14px;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      background-color: #606c38; /* Dark Olive */
+      color: #fefae0; /* Cream */
+      margin-top: 20px;
+    }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #bc6c25; /* Burnt Orange */
+      color: #fefae0; /* Cream */
+      padding: 15px 20px;
+      border-radius: 5px;
+      font-size: 18px;
+      text-align: center;
+      z-index: 1000;
+    }
+    .progress-container {
+      width: 100%;
+      background-color: #fefae0; /* Cream */
+      border: 1px solid #dda15e; /* Light Orange */
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .progress-bar {
+      height: 20px;
+      background-color: #dda15e; /* Light Orange */
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .device-info {
+      margin: 10px 0;
+      font-size: 14px;
+      color: #283618; /* Deep Forest Green */
+    }
+    .progress-text {
+      font-size: 16px;
+      color: #283618; /* Deep Forest Green */
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Physical Violence Detector</h1>
+  </header>
+
+  <main>
+    <section class="upload-section">
+      <h2>Upload Video</h2>
+      <div class="file-input-container">
+        <input type="file" id="videoUpload" accept="video/*">
+        <button id="analyzeButton">Analyze</button>
+      </div>
+      <div class="video-info" id="videoInfo">
+        <h3 id="videoTitle"></h3>
+      </div>
+    </section>
+
+    <section class="dashboard-section">
+      <div class="video-display">
+        <h2>Video Playback</h2>
+        <div class="video-container">
+          <h3>Uploaded Video</h3>
+          <video id="originalVideoPlayer" controls></video>
+        </div>
+        <div class="video-container">
+          <h3>Annotated Video</h3>
+          <video id="annotatedVideoPlayer" controls autoplay></video>
+        </div>
+      </div>
+
+      <div class="highlighted-scenes">
+        <h2>Analysis Results</h2>
+        <p id="resultMessage">Upload a video and click Analyze.</p>
+        
+        <div class="loading" id="loadingIndicator">
+          <div class="spinner"></div>
+          <p class="progress-text" id="progressText">Analyzing video for violence... 0%</p>
+          <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+          <div class="device-info" id="deviceInfo"></div>
+        </div>
+
+        <div class="result-container" id="resultContainer">
+          <div id="resultDetails"></div>
+          <div class="timestamps-section" id="timestampsSection">
+            <h4>Violence Detection Timestamps:</h4>
+            <div id="timestampsList" class="timestamp-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 Detecting Physical Violence in Video. All Rights Reserved.</p>
+  </footer>
+
+  <div id="uploadPopup" class="popup">
+    <p id="popupMessage">Video uploaded successfully!</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const socket = io.connect('http://' + window.location.hostname + ':5000');
+      const videoUpload = document.getElementById('videoUpload');
+      const analyzeButton = document.getElementById('analyzeButton');
+      const originalVideoPlayer = document.getElementById('originalVideoPlayer');
+      const annotatedVideoPlayer = document.getElementById('annotatedVideoPlayer');
+      const resultMessage = document.getElementById('resultMessage');
+      const resultContainer = document.getElementById('resultContainer');
+      const resultDetails = document.getElementById('resultDetails');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const videoInfo = document.getElementById('videoInfo');
+      const videoTitle = document.getElementById('videoTitle');
+      const popup = document.getElementById('uploadPopup');
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+      const deviceInfo = document.getElementById('deviceInfo');
+      const timestampsSection = document.getElementById('timestampsSection');
+      const timestampsList = document.getElementById('timestampsList');
+
+      // Handle SocketIO progress updates
+      socket.on('progress', function(data) {
+        const percentage = Math.min(data.percentage, 100).toFixed(0);
+        progressBar.style.width = `${percentage}%`;
+        progressText.textContent = `Analyzing video for violence... ${percentage}%`;
+      });
+
+      // Handle Google Drive upload notification
+      socket.on('drive_upload', function(data) {
+        showToast(data.message, 'info');
+      });
+
+      // Handle violence timestamps
+      socket.on('violence_timestamps', function(data) {
+        displayTimestamps(data.timestamps);
+      });
+
+      // Display timestamps in the UI
+      function displayTimestamps(timestamps) {
+        timestampsList.innerHTML = '';
+        
+        if (timestamps && timestamps.length > 0) {
+          timestamps.forEach(timestamp => {
+            const timestampElement = document.createElement('span');
+            timestampElement.className = 'timestamp-item';
+            timestampElement.textContent = timestamp;
+            timestampsList.appendChild(timestampElement);
+          });
+        } else {
+          const noViolenceElement = document.createElement('span');
+          noViolenceElement.className = 'no-violence-message';
+          noViolenceElement.textContent = 'No violence detected';
+          timestampsList.appendChild(noViolenceElement);
+        }
+      }
+
+      // Show popup message
+      function showPopup(message) {
+        document.getElementById('popupMessage').textContent = message;
+        popup.style.display = 'block';
+        setTimeout(() => {
+          popup.style.display = 'none';
+        }, 3000);
+      }
+
+      // Show toast notification
+      function showToast(message, type = 'info') {
+        Toastify({
+          text: message,
+          duration: 3000,
+          gravity: 'top',
+          position: 'center',
+          backgroundColor: type === 'error' ? '#a5581f' : '#bc6c25', /* Burnt Orange, darker for error */
+        }).showToast();
+      }
+
+      // Handle file selection
+      videoUpload.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+          const file = e.target.files[0];
+          // Validate file size (max 50MB)
+          if (file.size > 50 * 1024 * 1024) {
+            showToast('File too large (max 50MB)', 'error');
+            videoUpload.value = '';
+            return;
+          }
+          const videoURL = URL.createObjectURL(file);
+          originalVideoPlayer.src = videoURL;
+          originalVideoPlayer.style.display = 'block';
+          videoTitle.textContent = file.name.replace(/\.[^/.]+$/, "");
+          videoInfo.style.display = 'block';
+          resultContainer.style.display = 'none';
+          resultMessage.textContent = 'Click Analyze to process the video.';
+          annotatedVideoPlayer.src = '';
+          annotatedVideoPlayer.style.display = 'none';
+          // Clear previous timestamps
+          timestampsList.innerHTML = '';
+          showPopup('Video uploaded successfully!');
+        } else {
+          originalVideoPlayer.src = '';
+          originalVideoPlayer.style.display = 'none';
+          annotatedVideoPlayer.src = '';
+          annotatedVideoPlayer.style.display = 'none';
+          videoInfo.style.display = 'none';
+          resultMessage.textContent = 'Upload a video and click Analyze.';
+          timestampsList.innerHTML = '';
+        }
+      });
+
+      // Handle analyze button click
+      analyzeButton.addEventListener('click', async function() {
+        if (!videoUpload.files.length) {
+          showToast('Please select a video file first!', 'error');
+          return;
+        }
+
+        const file = videoUpload.files[0];
+        const formData = new FormData();
+        formData.append('video', file);
+
+        try {
+          // UI updates
+          loadingIndicator.style.display = 'block';
+          analyzeButton.disabled = true;
+          resultContainer.style.display = 'none';
+          resultMessage.textContent = 'Uploading to Google Drive and analyzing...';
+          annotatedVideoPlayer.src = '';
+          annotatedVideoPlayer.style.display = 'none';
+          progressBar.style.width = '0%';
+          progressText.textContent = 'Analyzing video for violence... 0%';
+          deviceInfo.textContent = `Processing on ${navigator.hardwareConcurrency || 'unknown'} CPU cores`;
+          // Clear previous timestamps
+          timestampsList.innerHTML = '';
+
+          // Play the original video
+          originalVideoPlayer.currentTime = 0; // Reset to start
+          originalVideoPlayer.play().catch(err => {
+            showToast(`Failed to play uploaded video: ${err.message}`, 'error');
+          });
+
+          const response = await fetch('/analyze', {
+            method: 'POST',
+            body: formData,
+          });
+
+          loadingIndicator.style.display = 'none';
+          analyzeButton.disabled = false;
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error processing video');
+          }
+
+          const blob = await response.blob();
+          const videoURL = URL.createObjectURL(blob);
+
+          // Display annotated video
+          annotatedVideoPlayer.src = videoURL;
+          annotatedVideoPlayer.style.display = 'block';
+          resultContainer.style.display = 'block';
+          resultMessage.textContent = 'Video analyzed successfully!';
+          resultDetails.textContent = 'Bounding boxes: Red for violence, Green for normal.';
+          showToast('Analysis complete!', 'info');
+        } catch (error) {
+          loadingIndicator.style.display = 'none';
+          analyzeButton.disabled = false;
+          resultMessage.textContent = 'Analysis failed.';
+          showToast(`Error: ${error.message}`, 'error');
+          console.error('Error:', error);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
